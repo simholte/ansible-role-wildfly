@@ -1,0 +1,48 @@
+---
+
+  - name: Create wildfly group
+    group: name={{ wildfly_group }} state=present
+
+  - name: Create wildfly user
+    user: name={{ wildfly_user }} group={{ wildfly_group }} createhome=no
+        state=present
+
+  - name: check if archive download exists
+    stat: path="/tmp/{{ wildfly_download_file }}"
+    register: wildfly_archive_check
+
+  - name: download wildfly
+    get_url: url="{{ wildfly_download_url }}" dest=/tmp
+    when: wildfly_archive_check.stat.exists == False
+
+  - name: unpack wildfly archive
+    unarchive: src="/tmp/{{ wildfly_download_file }}" dest="{{ wildfly_install_dir }}" owner="{{ wildfly_user }}" group="{{ wildfly_group }}" copy=no
+   # when: wildfly_archive_check.stat.exists == False
+
+
+  - name: update JBOSS_OPTS file
+    lineinfile: dest="{{ wildfly_dir }}/docs/contrib/scripts/init.d/wildfly.conf"
+              regexp=^JBOSS_OPTS
+              line="JBOSS_OPTS=\"-Djboss.bind.address=0.0.0.0 -Djboss.bind.address.management=0.0.0.0 -Djboss.socket.binding.port-offset={{ wildfly_port_offset }}\""
+
+  - name: create link for wildfly.conf to /etc/default/wildfly
+    file: src="{{ wildfly_dir }}/docs/contrib/scripts/init.d/wildfly.conf" dest=/etc/default/wildfly.conf state=link
+
+  - name: create a link for wildfly startup
+    template: src=wildfly-init-redhat.sh dest=/etc/init.d/wildfly mode=0755 owner="{{ wildfly_user }}" group="{{ wildfly_group }}"
+
+  - name: add a default user of iadmin
+    template: src=mgmt-users.properties dest="{{ wildfly_dir }}/standalone/configuration/mgmt-users.properties" owner="{{ wildfly_user }}" group="{{ wildfly_group }}"
+
+  - name: add permissions for iadmin
+    template: src=mgmt-groups.properties dest="{{ wildfly_dir }}/standalone/configuration/mgmt-groups.properties" owner="{{ wildfly_user }}" group="{{ wildfly_group }}"  
+
+  - name: create a link to wildfly
+    file: src="{{ wildfly_dir }}" dest="{{ wildfly_install_dir }}/wildfly" state=link owner="{{ wildfly_user }}" group="{{ wildfly_group }}"
+
+  - name: cleanup download if configured to do so
+    file: path="/tmp/{{ wildfly_download_file }}" state=absent
+    when: cleanup_wildfly_download
+
+  - name: Enable JBoss to be started at boot
+    service: name={{wildfly_service_name}} enabled=yes state=started

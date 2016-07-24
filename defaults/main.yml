@@ -1,0 +1,21 @@
+---
+# defaults file for wildfly
+wildfly_version: 10.0.0.Final
+
+wildfly_user: wildfly
+wildfly_group: wildfly
+
+wildfly_service_name: wildfly
+
+wildfly_base_download_url: http://download.jboss.org/wildfly
+wildfly_name: wildfly-{{ wildfly_version }}
+wildfly_download_file: "{{ wildfly_name }}.tar.gz"
+wildfly_download_url: "{{ wildfly_base_download_url }}/{{ wildfly_version }}/\
+                       {{ wildfly_download_file }}"
+wildfly_install_dir: /opt
+wildfly_dir: "{{ wildfly_install_dir }}/{{ wildfly_name }}"
+wildfly_version_file: "{{ wildfly_dir }}/version"
+
+wildfly_port_offset: 0
+
+cleanup_wildfly_download: False

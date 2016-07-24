@@ -1,0 +1,10 @@
+---
+
+- hosts: all
+    # Use sudo
+  sudo: yes
+
+  roles:
+    - java
+    - wildfly
+

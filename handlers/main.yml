@@ -1,0 +1,4 @@
+---
+# handlers file for wildfly
+- name: restart wildfly
+  service: name={{wildfly_servce_name}} state=restarted
