@@ -31,11 +31,14 @@
   - name: create a link for wildfly startup
     template: src=wildfly-init-redhat.sh dest=/etc/init.d/wildfly mode=0755 owner="{{ wildfly_user }}" group="{{ wildfly_group }}"
 
-  - name: add a default user of iadmin
-    template: src=mgmt-users.properties dest="{{ wildfly_dir }}/standalone/configuration/mgmt-users.properties" owner="{{ wildfly_user }}" group="{{ wildfly_group }}"
-
-  - name: add permissions for iadmin
-    template: src=mgmt-groups.properties dest="{{ wildfly_dir }}/standalone/configuration/mgmt-groups.properties" owner="{{ wildfly_user }}" group="{{ wildfly_group }}"  
+  # The user will always be overwritten every time a user and password is given.
+  - name: Create management user
+    command: >
+      {{ wildfly_dir }}/bin/add-user.sh
+      {{ wildfly_management_user }} {{ wildfly_management_password }}
+    become_user: "{{ wildfly_user }}"
+    when: wildfly_management_user is defined and
+          wildfly_management_password is defined
 
   - name: create a link to wildfly
     file: src="{{ wildfly_dir }}" dest="{{ wildfly_install_dir }}/wildfly" state=link owner="{{ wildfly_user }}" group="{{ wildfly_group }}"
